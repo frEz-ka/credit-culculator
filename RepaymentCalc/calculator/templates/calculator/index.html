@@ -1,0 +1,213 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<div class="calculator">
+    <div class="credits-form">
+        <h2>Добавьте ваши кредиты</h2>
+        <form id="creditsForm" method="post">{% csrf_token %}
+            <div id="creditsContainer">
+                <div class="credit-item">
+                    <div class="form-group">
+                        <label>Название кредита:</label>
+                        <input type="text" name="name" value="Кредит 1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Сумма кредита:</label>
+                        <input type="number" name="amount" placeholder="100000" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Процентная ставка (% годовых):</label>
+                        <input type="number" name="interest_rate" placeholder="15" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Срок (месяцев):</label>
+                        <input type="number" name="term" placeholder="36" required>
+                    </div>
+                    <button type="button" class="remove-credit" onclick="removeCredit(this)">Удалить</button>
+                </div>
+            </div>
+
+            <button type="button" onclick="addCredit()">Добавить кредит</button>
+
+            <div class="form-group">
+                <label>Ежемесячный платеж:</label>
+                <input type="number" id="monthlyPayment" name="monthlyPayment" placeholder="5000" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label>Метод погашения:</label>
+                <select id="method" name="method">
+                    <option value="avalanche">Лавина (сначала высокие проценты)</option>
+                    <option value="snowball">Снежный ком (сначала маленькие кредиты)</option>
+                </select>
+            </div>
+
+            <button type="submit" name="calculate" value="1">Рассчитать</button>
+        </form>
+    </div>
+
+    <div id="results" class="results" style="display: none;">
+        <h2>Результаты расчета</h2>
+        <div id="summary"></div>
+        <div id="schedule"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+let creditCount = 1;
+
+function addCredit() {
+    creditCount++;
+    const container = document.getElementById('creditsContainer');
+    const newCredit = document.createElement('div');
+    newCredit.className = 'credit-item';
+    newCredit.innerHTML = `
+        <div class="form-group">
+            <label>Название кредита:</label>
+            <input type="text" name="name" value="Кредит ${creditCount}" required>
+        </div>
+        <div class="form-group">
+            <label>Сумма кредита:</label>
+            <input type="number" name="amount" placeholder="100000" step="0.01" required>
+        </div>
+        <div class="form-group">
+            <label>Процентная ставка (% годовых):</label>
+            <input type="number" name="interest_rate" placeholder="15" step="0.01" required>
+        </div>
+        <div class="form-group">
+            <label>Срок (месяцев):</label>
+            <input type="number" name="term" placeholder="36" required>
+        </div>
+        <button type="button" class="remove-credit" onclick="removeCredit(this)">Удалить</button>
+    `;
+    container.appendChild(newCredit);
+}
+
+function removeCredit(button) {
+    if (document.querySelectorAll('.credit-item').length > 1) {
+        button.parentElement.remove();
+    }
+}
+
+/*document.getElementById('creditsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const credits = [];
+    const creditItems = document.querySelectorAll('.credit-item');
+
+    creditItems.forEach(item => {
+        const inputs = item.querySelectorAll('input');
+        credits.push({
+            name: inputs[0].value,
+            amount: parseFloat(inputs[1].value),
+            interest_rate: parseFloat(inputs[2].value),
+            term: parseInt(inputs[3].value)
+        });
+    });
+
+    const data = {
+        credits: credits,
+        method: document.getElementById('method').value,
+        monthly_payment: parseFloat(document.getElementById('monthlyPayment').value)
+    };
+
+    fetch('/calculate/calculate/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Ошибка: ' + data.error);
+        } else {
+            displayResults(data);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при расчете');
+    });
+});*/
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function displayResults(data) {
+    const summaryDiv = document.getElementById('summary');
+    const scheduleDiv = document.getElementById('schedule');
+
+    // Отображаем сводку
+    summaryDiv.innerHTML = `
+        <div class="summary-card">
+            <h3>Сводка</h3>
+            <p><strong>Метод:</strong> ${data.method === 'avalanche' ? 'Лавина' : 'Снежный ком'}</p>
+            <p><strong>Общее время погашения:</strong> ${Math.floor(data.total_months/12)} лет ${data.total_months % 12} месяцев</p>
+            <p><strong>Общая сумма процентов:</strong> ${data.total_interest.toFixed(2)} руб.</p>
+        </div>
+    `;
+
+    // Отображаем график платежей (первые 12 месяцев)
+    let scheduleHTML = '<h3>График платежей (первые 12 месяцев)</h3>';
+    data.schedule.slice(0, 12).forEach(month => {
+        scheduleHTML += `
+            <div class="month-schedule">
+                <h4>Месяц ${month.month}</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Кредит</th>
+                            <th>Основной долг</th>
+                            <th>Проценты</th>
+                            <th>Всего</th>
+                            <th>Остаток</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        month.payments.forEach(payment => {
+            scheduleHTML += `
+                <tr>
+                    <td>${payment.name}</td>
+                    <td>${payment.principal.toFixed(2)}</td>
+                    <td>${payment.interest.toFixed(2)}</td>
+                    <td>${payment.total_payment.toFixed(2)}</td>
+                    <td>${payment.remaining.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+
+        scheduleHTML += `
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>Итого за месяц:</strong></td>
+                            <td colspan="2"><strong>${month.total_paid.toFixed(2)} руб.</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+    });
+
+    scheduleDiv.innerHTML = scheduleHTML;
+    document.getElementById('results').style.display = 'block';
+}
+</script>
+{% endblock %}

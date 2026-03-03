@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кредитный калькулятор</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'calculator/css/main.css' %}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Калькулятор выплат по кредитам</h1>
+        </header>
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+</body>
+</html>
