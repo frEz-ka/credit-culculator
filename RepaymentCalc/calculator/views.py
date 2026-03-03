@@ -4,7 +4,6 @@ def index(request):
     #если пришел метод ПОСТ вызываем calculate_payments
     #иначе как есть работаем
     if request.method == 'POST' or (request.method == 'GET' and request.GET.get('calculate') == 1):
-        #return calculate_payments(request)
         calc_result = calculate_payments_simple(request)
         return render(request, 'calculator/result.html', calc_result)
     else:
@@ -12,7 +11,7 @@ def index(request):
 
 def calculate_payments_simple(request):
     data = request.POST
-    print(data)
+    # print(data)
     names = data.getlist('name', [])
     amounts = data.getlist('amount', [])
     interest_rates = data.getlist('interest_rate', [])
