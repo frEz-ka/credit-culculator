@@ -11,10 +11,11 @@
                     <p>{{'Снежный ком'}}</p>
                 {%endif%}
             <h3>Количество месяцев</h3>
-                <p>{{ total_months }}{% if months_break %}
-                    При заданных параметрах расчёта срок погашения слишком большой.<br />
-                    Он был ограничен 30 годами. <br />
-                    Попробуйте задать другие параметры{% endif %}
+                <p>{{ total_months }}<br>
+                    {% if months_break %}
+                    <span style="font-size:80%; color:red;">При заданных параметрах расчёта срок погашения слишком большой и общего платежа не хватает для закрытия обязательств в течение 30 лет<br />
+                    Чтобы погасить ваши кредиты вам нужно увеличить сумму ежемесячного платежа<br />
+                    </span><a href="/calculate/calculate/" style="color: navy;font-size:90%;">попробовать еще раз</a> {% endif %}
                 </p>
             <h3>Переплата</h3>
             <p> {{ total_interest | floatformat:2 }}</p>
@@ -31,15 +32,17 @@
                     <td><ul>
                     {% for payment in month_data.payments %}
                         <li>
-                            {{ payment.name }}
-                            проценты {{ payment.principal | floatformat:2  }},
-                            платёж {{ payment.total_payment | floatformat:2  }},
-                            остаток кредита {{ payment.remaining | floatformat:2  }}
+                            {{ payment.name }}|
+                            проценты {{ payment.interest | floatformat:2  }} |
+                            осн. долг {{ payment.principal | floatformat:2  }} |
+                            платёж {{ payment.total_payment | floatformat:2  }} |
+                            остаток долга {{ payment.remaining | floatformat:2  }}
                         </li>
                     {% endfor %}
                     </ul></td>
                 </tr>
                 {% endfor %}
             </table>
+            <p><br/><a href="/calculate/calculate/" style="color: navy;">попробовать еще раз</a></p>
         </div>
 {% endblock %}
